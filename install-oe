@@ -1,0 +1,149 @@
+#! /bin/bash
+#
+
+# 
+
+OEBASE=$(pwd)
+
+
+## Provide an echo that supports -e and -n
+# If formatting is needed, $ECHO should be used
+case "`echo -e -n test`" in
+	-[en]*)
+		ECHO=/bin/echo
+		;;
+	*)
+		ECHO=echo
+		;;
+esac
+
+
+## Set color commands, used via $ECHO
+# Please consult `man console_codes for more information
+# under the "ECMA-48 Set Graphics Rendition" section
+#
+# Warning: when switching from a 8bit to a 9bit font,
+# the linux console will reinterpret the bold (1;) to
+# the top 256 glyphs of the 9bit font.  This does
+# not affect framebuffer consoles
+NORMAL="\\033[0;39m"		# Standard console grey
+INFO="\\033[1;36m"		# Information is light cyan
+WARNING="\\033[1;33m"		# Warnings are yellow
+FAILURE="\\033[1;31m"		# Failures are red
+
+
+## Functions
+#
+echo_info()
+{
+	${ECHO} -e "${INFO}$1${NORMAL}"
+}
+
+echo_failure()
+{
+	${ECHO} -e "${FAILURE}$1${NORMAL}"
+}
+
+chk_env()
+{
+	echo_info "Check environment variable..."
+
+	if [ -z "${OEBASE}" ]; then
+		echo_failure "Environment variable \$OEBASE is not set."
+		${ECHO}      "Path to your OE installation."
+		exit 1
+	fi
+}
+
+get_bitbake()
+{
+	echo_info "Getting BitBake..."
+
+	# entry ${OEBASE} directory
+	cd ${OEBASE}
+
+	wget http://download.berlios.de/bitbake/bitbake-1.8.18.tar.gz
+	if [ ! -f "./bitbake-1.8.18.tar.gz" ]; then
+		return
+	fi
+	tar -xvzf bitbake-1.8.18.tar.gz
+	mv bitbake-1.8.18 bitbake
+	rm -f bitbake-1.8.18.tar.gz
+}
+
+get_openembedded()
+{
+	echo_info "Getting OpenEmbedded..."
+
+	# entry ${OEBASE} directory
+	cd ${OEBASE}
+
+	# clone repository
+	git clone git://git.openembedded.org/openembedded
+}
+
+create_oe_env_script()
+{
+	echo_info "Create shell script for environment variable..."
+
+	if [ -f "./oe-env" ]; then
+		return
+	fi
+
+	${ECHO} '#! /bin/bash
+#
+# sample oe-env script - 'source ./oe-env' to use this environment.
+#
+# NOTE:
+# In this example, I have a dir in my home directory called 'workspace/oe/',
+# where I do all my development work.  In this dir I have downloaded the
+# 'openembedded/' tree from the git repository, and I have manually "mkdir'ed"
+# the oe_downloads/ dir.
+#
+OEBASE=$(pwd); export OEBASE
+PATH=${OEBASE}/bitbake/bin:${PATH}; export PATH
+BBPATH=${OEBASE}/build:${OEBASE}/openembedded; export BBPATH
+BB_ENV_EXTRAWHITE="OEBASE"; export BB_ENV_EXTRAWHITE
+' >> ./oe-env
+}
+
+init_localconf()
+{
+	echo_info "Initialize local.conf file..."
+
+	# entry ${OEBASE} directory
+	cd ${OEBASE}
+
+	mkdir -p ${OEBASE}/build/conf
+
+	if [ ! -f "${OEBASE}/openembedded/conf/local.conf.sample" ]; then
+		echo_failure "No such file or directory."
+		exit 1
+	fi
+
+	cp ${OEBASE}/openembedded/conf/local.conf.sample ${OEBASE}/build/conf/local.conf
+}
+
+
+# main function
+main()
+{
+	${ECHO} ""
+
+	chk_env
+
+	get_bitbake
+	get_openembedded
+	create_oe_env_script
+	init_localconf
+
+#	source ./oe-env
+	${ECHO} ""
+}
+
+
+## Main loop
+#
+main
+
+
