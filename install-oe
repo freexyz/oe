@@ -92,13 +92,7 @@ create_oe_env_script()
 
 	${ECHO} '#! /bin/bash
 #
-# sample oe-env script - 'source ./oe-env' to use this environment.
-#
-# NOTE:
-# In this example, I have a dir in my home directory called 'workspace/oe/',
-# where I do all my development work.  In this dir I have downloaded the
-# 'openembedded/' tree from the git repository, and I have manually "mkdir'ed"
-# the oe_downloads/ dir.
+# sample oe-env script - "source ./oe-env" to use this environment.
 #
 OEBASE=$(pwd); export OEBASE
 PATH=${OEBASE}/bitbake/bin:${PATH}; export PATH
