@@ -132,6 +132,8 @@ main()
 	init_localconf
 
 #	source ./oe-env
+
+	echo_info "Install finished..."
 	${ECHO} ""
 }
 
